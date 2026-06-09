@@ -655,16 +655,16 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
       </ul>
 
       <div class="price-block">
-        <div class="price"><span class="euro">€</span>7</div>
+        <div class="price" data-cta-price-big><span class="euro">€</span>7</div>
         <div class="price-note">em até 72h · PDF personalizado</div>
       </div>
 
-      <a class="cta" href="https://buy.stripe.com/9B67sN9W5ceNaW4aNw08g00?ref=mini-guia-sentar-levantar" target="_blank" rel="noopener">
-        <span>Quero o meu Treino Express · €7</span>
+      <a class="cta" href="https://buy.stripe.com/9B67sN9W5ceNaW4aNw08g00?ref=mini-guia-sentar-levantar" target="_blank" rel="noopener" data-cta="offer" data-cta-product="treinoExpress" data-cta-label="Quero o meu Treino Express">
+        <span data-cta-text>Quero o meu Treino Express · €7</span>
         <span class="arrow">→</span>
       </a>
       <p class="cta-sub">
-        Pagamento seguro · Cartão · MB Way · SEPA<br />
+        Pagamento seguro · <span data-cta-methods>Cartão · MB Way · SEPA</span><br />
         Quer entender melhor antes? <a href="https://ptlucaslima.pt/treino-express/" target="_blank" rel="noopener">Conhecer a página completa →</a>
       </p>
     </section>
@@ -681,5 +681,93 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
     </footer>
 
   </main>
+
+  <script>
+    // ──────────────────────────────────────────────────────────────
+    // Auto-detecção de moeda por localização
+    // PT/EU → Stripe (EUR)  ·  BR → MFit (BRL)  ·  Outros → Stripe (USD)
+    // ──────────────────────────────────────────────────────────────
+    (function(){
+      var STRIPE = 'https://buy.stripe.com/9B67sN9W5ceNaW4aNw08g00?ref=mini-guia-sentar-levantar';
+      var MFIT = 'https://pages.mfitpersonal.com.br/index?acao=page&tipo=2&buyPage=122115&page=122115';
+      var PRICES = { EUR: '€7', USD: '$8', BRL: 'R$ 39', amount: { EUR: 7, USD: 8, BRL: 39 } };
+      var METHODS = {
+        EUR: 'Cartão · MB Way · SEPA',
+        USD: 'Card · Apple Pay · Link',
+        BRL: 'Pix · Cartão BR · Boleto'
+      };
+      var EUR_COUNTRIES = {PT:1,ES:1,FR:1,DE:1,IT:1,NL:1,BE:1,IE:1,AT:1,FI:1,GR:1,LU:1,MT:1,CY:1,EE:1,LV:1,LT:1,SK:1,SI:1,HR:1,DK:1,SE:1,PL:1,CZ:1,HU:1,RO:1,BG:1,NO:1,IS:1,CH:1,LI:1,AD:1,MC:1,SM:1,VA:1,GB:1};
+
+      function currencyForCountry(c){
+        if (c === 'BR') return 'BRL';
+        if (EUR_COUNTRIES[c]) return 'EUR';
+        return 'USD';
+      }
+
+      function applyCurrency(currency){
+        var href = (currency === 'BRL') ? MFIT : STRIPE;
+        document.querySelectorAll('[data-cta-product]').forEach(function(btn){
+          btn.href = href;
+          var label = btn.getAttribute('data-cta-label') || 'Quero o meu Treino Express';
+          var textEl = btn.querySelector('[data-cta-text]');
+          if (textEl) textEl.textContent = label + ' · ' + PRICES[currency];
+        });
+        document.querySelectorAll('[data-cta-methods]').forEach(function(el){
+          el.textContent = METHODS[currency] || METHODS.EUR;
+        });
+        document.querySelectorAll('[data-cta-price-big]').forEach(function(el){
+          if (currency === 'USD') el.innerHTML = '<span class="euro">$</span>8';
+          else if (currency === 'BRL') el.innerHTML = '<span class="euro" style="font-size:0.55em">R$</span>39';
+          else el.innerHTML = '<span class="euro">€</span>7';
+        });
+      }
+
+      function getCachedCountry(){
+        try {
+          var raw = localStorage.getItem('llCountry');
+          if (!raw) return null;
+          var obj = JSON.parse(raw);
+          if (!obj || (Date.now() - obj.t) > 86400000) return null; // 24h cache
+          return obj.c;
+        } catch(e) { return null; }
+      }
+      function setCachedCountry(c){
+        try { localStorage.setItem('llCountry', JSON.stringify({ c: c, t: Date.now() })); } catch(e) {}
+      }
+
+      // URL override para teste: ?force=BR, ?force=US, ?force=PT
+      var forceMatch = (location.search || '').match(/[?&]force=([A-Z]{2})/i);
+      if (forceMatch) {
+        applyCurrency(currencyForCountry(forceMatch[1].toUpperCase()));
+      } else {
+        var cached = getCachedCountry();
+        if (cached) applyCurrency(currencyForCountry(cached));
+        fetch('https://api.country.is/', { cache: 'no-store' })
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if (d && d.country) {
+              setCachedCountry(d.country);
+              if (!cached || cached !== d.country) applyCurrency(currencyForCountry(d.country));
+            }
+          })
+          .catch(function(){ /* mantém EUR padrão */ });
+      }
+
+      // Meta Pixel: InitiateCheckout com moeda correta
+      document.querySelectorAll('[data-cta]').forEach(function(el){
+        el.addEventListener('click', function(){
+          if (typeof fbq === 'function') {
+            var c = currencyForCountry(getCachedCountry() || 'PT');
+            fbq('track', 'InitiateCheckout', {
+              content_name: 'Treino Express',
+              content_category: 'low-ticket',
+              value: PRICES.amount[c] || 7,
+              currency: c
+            });
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
