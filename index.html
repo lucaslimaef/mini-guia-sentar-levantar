@@ -659,7 +659,7 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
         <div class="price-note">em até 72h · PDF personalizado</div>
       </div>
 
-      <a class="cta" href="https://buy.stripe.com/9B67sN9W5ceNaW4aNw08g00?ref=mini-guia-sentar-levantar" target="_blank" rel="noopener" data-cta="offer" data-cta-product="treinoExpress" data-cta-label="Quero o meu Treino Express">
+      <a class="cta" href="https://ptlucaslima.pt/treino-express/?ref=mini-guia-sentar-levantar" target="_blank" rel="noopener" data-cta="offer" data-cta-product="treinoExpress" data-cta-label="Quero o meu Treino Express">
         <span data-cta-text>Quero o meu Treino Express · €7</span>
         <span class="arrow">→</span>
       </a>
@@ -688,8 +688,6 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
     // PT/EU → Stripe (EUR)  ·  BR → MFit (BRL)  ·  Outros → Stripe (USD)
     // ──────────────────────────────────────────────────────────────
     (function(){
-      var STRIPE = 'https://buy.stripe.com/9B67sN9W5ceNaW4aNw08g00?ref=mini-guia-sentar-levantar';
-      var MFIT = 'https://pages.mfitpersonal.com.br/index?acao=page&tipo=2&buyPage=122115&page=122115';
       var PRICES = { EUR: '€7', USD: '$8', BRL: 'R$ 39', amount: { EUR: 7, USD: 8, BRL: 39 } };
       var METHODS = {
         EUR: 'Cartão · MB Way · SEPA',
@@ -705,9 +703,7 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
       }
 
       function applyCurrency(currency){
-        var href = (currency === 'BRL') ? MFIT : STRIPE;
         document.querySelectorAll('[data-cta-product]').forEach(function(btn){
-          btn.href = href;
           var label = btn.getAttribute('data-cta-label') || 'Quero o meu Treino Express';
           var textEl = btn.querySelector('[data-cta-text]');
           if (textEl) textEl.textContent = label + ' · ' + PRICES[currency];
@@ -758,7 +754,7 @@ src="https://www.facebook.com/tr?id=264800457918824&ev=PageView&noscript=1"/></n
         el.addEventListener('click', function(){
           if (typeof fbq === 'function') {
             var c = currencyForCountry(getCachedCountry() || 'PT');
-            fbq('track', 'InitiateCheckout', {
+            fbq('track', 'ViewContent', {
               content_name: 'Treino Express',
               content_category: 'low-ticket',
               value: PRICES.amount[c] || 7,
